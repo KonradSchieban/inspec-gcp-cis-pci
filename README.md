@@ -32,7 +32,7 @@ gcp_project_id = attribute('gcp_project_id')
 gke_cache = GKECache(project: gcp_project_id, gke_locations: ['us-central1-a'])
 p gke_cache.gke_clusters_cache
 
-gce_cache = GCECache(project: gcp_project_id, gke_locations: ['us-central1-a'])
+gce_cache = GCECache(project: gcp_project_id, gce_zones: ['us-central1-a'])
 p gce_cache.gce_instances_cache
 ```
 
