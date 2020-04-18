@@ -1,9 +1,12 @@
 # frozen_string_literal: true
 
+# Base Class for GCP Cache Classes
+#
 class GCPBaseCache < Inspec.resource(1)
   name 'GCPBaseCache'
-  desc 'The GCP Base cache resource is inherited by more specific cache classes (e.g. GCE, GKE):
-       The cache is consumed by the CIS and PCI Google Inspec profiles:
+  desc 'The GCP Base cache resource is inherited by more specific cache
+       classes (e.g. GCE, GKE). The cache is consumed by the CIS and PCI
+       Google Inspec profiles:
        https://github.com/GoogleCloudPlatform/inspec-gcp-cis-benchmark'
   attr_reader :gke_locations
 
@@ -14,20 +17,22 @@ class GCPBaseCache < Inspec.resource(1)
 
   protected
 
-  def get_all_gcp_locations
+  def all_gcp_locations
     locations = inspec.google_compute_zones(project: @gcp_project_id).zone_names
     locations += inspec.google_compute_regions(project: @gcp_project_id)
                        .region_names
     locations
   end
-
 end
 
+# Cache for GKE cluster list.
+#
 class GKECache < GCPBaseCache
   name 'GKECache'
-  desc 'The GKE cache resource contains functions consumed by the CIS/PCI Google profiles:
+  desc 'The GKE cache resource contains functions consumed by the CIS/PCI
+       Google profiles:
        https://github.com/GoogleCloudPlatform/inspec-gcp-cis-benchmark'
-  attr_reader :gke_locations, :gce_zones
+  attr_reader :gke_locations
 
   @@cached_gke_clusters = []
   @@gke_clusters_cached = false
@@ -35,24 +40,22 @@ class GKECache < GCPBaseCache
   def initialize(project: '', gke_locations: [])
     @gcp_project_id = project
     @gke_locations = if gke_locations.join.empty?
-                       get_all_gcp_locations
+                       all_gcp_locations
                      else
                        gke_locations
                      end
   end
 
-  def get_gke_clusters_cache()
-    if is_gke_cached == false
-      set_gke_clusters_cache
-    end
+  def gke_clusters_cache
+    set_gke_clusters_cache unless gke_cached?
     @@cached_gke_clusters
   end
 
-  def is_gke_cached
+  def gke_cached?
     @@gke_clusters_cached
   end
 
-  def set_gke_clusters_cache()
+  def set_gke_clusters_cache
     @@cached_gke_clusters = []
     collect_gke_clusters_by_location(@gke_locations)
     @@gke_clusters_cached = true
@@ -65,17 +68,21 @@ class GKECache < GCPBaseCache
       inspec.google_container_clusters(project: @gcp_project_id,
                                        location: gke_location).cluster_names
             .each do |gke_cluster|
-        @@cached_gke_clusters.push({ cluster_name: gke_cluster, location: gke_location })
+        @@cached_gke_clusters.push({ cluster_name: gke_cluster,
+                                     location: gke_location })
       end
     end
   end
 end
 
+# Cache for GCE instances
+#
 class GCECache < GCPBaseCache
   name 'GCECache'
-  desc 'The GCE cache resource contains functions consumed by the CIS/PCI Google profiles:
+  desc 'The GCE cache resource contains functions consumed by the CIS/PCI
+       Google profiles:
        https://github.com/GoogleCloudPlatform/inspec-gcp-cis-benchmark'
-  attr_reader :gke_locations, :gce_zones
+  attr_reader :gce_zones
 
   @@cached_gce_instances = []
   @@gce_instances_cached = false
@@ -83,24 +90,23 @@ class GCECache < GCPBaseCache
   def initialize(project: '', gce_zones: [])
     @gcp_project_id = project
     @gce_zones = if gce_zones.join.empty?
-                   inspec.google_compute_zones(project: @gcp_project_id).zone_names
+                   inspec.google_compute_zones(project: @gcp_project_id)
+                         .zone_names
                  else
                    gce_zones
                  end
   end
 
-  def get_gce_instances_cache()
-    if is_gce_cached == false
-      set_gce_instances_cache
-    end
+  def gce_instances_cache
+    set_gce_instances_cache unless gce_cached?
     @@cached_gce_instances
   end
 
-  def is_gce_cached
+  def gce_cached?
     @@gce_instances_cached
   end
 
-  def set_gce_instances_cache()
+  def set_gce_instances_cache
     @@cached_gce_instances = []
     # Loop/fetch/cache the names and locations of GKE clusters
     @gce_zones.each do |gce_zone|
