@@ -28,10 +28,12 @@ Now we could edit the controls to include lines such as:
 
 ```
 gcp_project_id = attribute('gcp_project_id')
-helper = gcp_helpers(project: gcp_project_id)
-p helper.get_all_gcp_locations
-p helper.collect_gke_clusters_by_location(['europe-west2'])
-p helper.get_gce_instances(['europe-west2-a'])
+
+gke_cache = GKECache(project: gcp_project_id, gke_locations: ['us-central1-a'])
+p gke_cache.gke_clusters_cache
+
+gce_cache = GCECache(project: gcp_project_id, gke_locations: ['us-central1-a'])
+p gce_cache.gce_instances_cache
 ```
 
 and directly use these methods in downstream profiles. 
